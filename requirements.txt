@@ -1,0 +1,19 @@
+# Core Bot & Web Server
+flask==3.0.3
+gunicorn==22.0.0
+
+# Data & Analysis
+yfinance==0.2.40
+pandas==2.2.2
+pandas-ta==0.3.14b0
+numpy<2.0 # pandas-ta compatibility
+
+# Charting
+mplfinance==0.12.10b0
+matplotlib==3.8.4
+
+# Async HTTP Client
+aiohttp==3.9.5
+
+# Utilities
+python-dotenv==1.0.1

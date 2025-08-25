@@ -1,0 +1,86 @@
+import logging
+import aiohttp
+from typing import List
+from datetime import datetime
+from ..config import settings
+from ..state import STATE
+from ..utils import async_backoff
+
+async def _ensure_session() -> aiohttp.ClientSession:
+    if STATE.session and not STATE.session.closed:
+        return STATE.session
+    timeout = aiohttp.ClientTimeout(total=30, connect=10, sock_read=20)
+    STATE.session = aiohttp.ClientSession(timeout=timeout)
+    return STATE.session
+
+async def _fetch_coinmarketcal_events() -> List[dict]:
+    """Fetches upcoming events from CoinMarketCal API."""
+    if not settings.COINMARKETCAL_API_KEY:
+        return []
+
+    session = await _ensure_session()
+    url = "https://api.coinmarketcal.com/v1/events"
+    # Get events for the next 30 days
+    params = {
+        "accessToken": settings.COINMARKETCAL_API_KEY,
+        "coins": "bitcoin",
+        "max": "5", # Get the top 5 most relevant events
+    }
+
+    async def _get():
+        async with session.get(url, params=params) as resp:
+            resp.raise_for_status()
+            data = await resp.json()
+            # The API returns a dictionary, the events are in the 'body' key
+            if isinstance(data, dict) and "body" in data:
+                return data["body"]
+            return [] # Return empty list if response format is unexpected
+
+    try:
+        return await async_backoff(_get, label="coinmarketcal.get")
+    except Exception as e:
+        logging.error(f"CoinMarketCal API failed: {e}")
+        return []
+
+async def get_upcoming_events() -> List[str]:
+    """
+    Fetches upcoming events, filters out seen events, and formats them for Discord.
+    """
+    events = await _fetch_coinmarketcal_events()
+    if not events:
+        return []
+    
+    messages = []
+    new_events_count = 0
+
+    for event in events:
+        event_id = str(event.get("id", ""))
+        if not event_id or event_id in STATE.seen_event_ids:
+            continue
+
+        if new_events_count >= 5:
+            break
+
+        title = event.get("title", "No Title")
+        date_str = event.get("date_event", "")
+        source_url = event.get("source", "")
+        
+        try:
+            # Format the date for better readability
+            date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            formatted_date = date_obj.strftime("%d %B %Y")
+        except (ValueError, TypeError):
+            formatted_date = "Date TBD"
+
+        message = f"**🗓️ {formatted_date}**: {title}"
+        if source_url:
+            message += f"\n<{source_url}>"
+
+        messages.append(message)
+        STATE.seen_event_ids.add(event_id)
+        new_events_count += 1
+    
+    if new_events_count > 0:
+        messages.insert(0, f"--- 🗓️ Upcoming Bitcoin Events ---")
+
+    return messages
