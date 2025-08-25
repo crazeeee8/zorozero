@@ -4,9 +4,6 @@ gunicorn==22.0.0
 
 # Data & Analysis
 yfinance==0.2.40
-pandas==2.0.3
-pandas-ta==0.3.14b0
-numpy==1.24.4
 
 # Charting
 mplfinance==0.12.10b0
@@ -25,3 +22,8 @@ python-3.11.6
 setuptools==69.5.1
 wheel==0.43.0
 
+
+--find-links prebuilt_wheels
+pandas==2.0.3
+pandas-ta==0.3.14b0
+numpy==1.24.4
