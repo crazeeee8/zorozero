@@ -1,11 +1,7 @@
 build:
   environment:
     pythonVersion: 3.11
-  preInstallScript: |
-    rm -rf .venv
-    python3.11 -m venv .venv
-    source .venv/bin/activate
+  buildCommand: |
     pip install --upgrade pip setuptools wheel
-  buildCommand: pip install -r requirements.txt
-
-startCommand: python run.py
+    pip install -r requirements.txt
+startCommand: gunicorn run:app
