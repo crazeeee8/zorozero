@@ -20,6 +20,7 @@ aiohttp==3.9.5
 python-dotenv==1.0.1
 
 
-
+setuptools==68.2.2
 cython==0.29.36
 python-3.11.6
+
