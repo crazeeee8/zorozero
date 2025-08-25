@@ -1,2 +1,4 @@
 build:
+  environment:
+    pythonVersion: 3.11
   buildCommand: pip install --upgrade pip && pip install -r requirements.txt
