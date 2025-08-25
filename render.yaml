@@ -2,8 +2,11 @@ build:
   environment:
     pythonVersion: 3.11
   buildCommand: |
-    rm -rf .venv
-    python3.11 -m venv .venv
-    .venv/bin/python -m pip install --upgrade pip setuptools wheel
-    PIP_ONLY_BINARY=:all: .venv/bin/pip install -r requirements.txt
-startCommand: .venv/bin/gunicorn run:app
+    set -e
+    rm -rf /opt/render/project/src/.venv
+    command -v python3.11 || { echo "python3.11 missing"; python3 --version; exit 1; }
+    python3.11 -m venv /opt/render/project/src/.venv
+    /opt/render/project/src/.venv/bin/python -m pip install --upgrade pip setuptools wheel
+    /opt/render/project/src/.venv/bin/python -c "import sys; print('Using', sys.version); assert sys.version_info[:2]==(3,11)"
+    PIP_PREFER_BINARY=1 /opt/render/project/src/.venv/bin/pip install -r requirements.txt
+startCommand: /opt/render/project/src/.venv/bin/gunicorn run:app --bind 0.0.0.0:$PORT
