@@ -1,7 +1,11 @@
 build:
   environment:
     pythonVersion: 3.11
-  buildCommand: |
-    pip install --upgrade pip
-    pip install -r requirements.txt
+  preInstallScript: |
+    rm -rf .venv
+    python3.11 -m venv .venv
+    source .venv/bin/activate
+    pip install --upgrade pip setuptools wheel
+  buildCommand: pip install -r requirements.txt
+
 startCommand: python run.py
